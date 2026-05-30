@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Мои долги</title>
+<link href="https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0f14;
+  --surface: #151820;
+  --surface2: #1c2030;
+  --border: #252a3a;
+  --accent: #4f8cff;
+  --text: #e8eaf0;
+  --muted: #6b7394;
+  --income: #43e89e;
+  --debt-color: #ff6b6b;
+  --ozon: #6db3ff;
+  --tbank: #ffdd00;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Geologica', sans-serif;
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+/* TABS */
+.tabs {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.tab {
+  flex: 1;
+  padding: 14px 8px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+.tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.page { display: none; padding: 16px; }
+.page.active { display: block; }
+
+/* HEADER */
+.header { text-align: center; margin-bottom: 20px; padding-top: 8px; }
+.header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #4f8cff, #43e89e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 4px;
+}
+.header p { color: var(--muted); font-size: 12px; }
+
+/* DEBT CARDS */
+.debt-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.debt-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+}
+.debt-card.tbank { border-top: 3px solid var(--tbank); }
+.debt-card.ozon  { border-top: 3px solid var(--ozon); }
+.dc-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
+.dc-value { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 700; color: var(--debt-color); }
+.dc-sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+/* PROGRESS BAR */
+.progress-wrap { margin-bottom: 20px; }
+.progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+.progress-bar { height: 8px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 99px; transition: width 0.5s ease; }
+.fill-tbank { background: linear-gradient(90deg, #ffdd00, #ffaa00); }
+.fill-ozon  { background: linear-gradient(90deg, #4f8cff, #43e89e); }
+
+/* SUMMARY STRIP */
+.summary-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.strip-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+}
+.strip-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+.strip-value { font-family: 'JetBrains Mono', monospace; font-size: 13px; font-weight: 600; }
+
+/* MONTH CARDS */
+.month-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.month-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  cursor: pointer;
+}
+.month-header-left { display: flex; align-items: center; gap: 10px; }
+.month-done-toggle {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.month-done-toggle.done { background: var(--income); border-color: var(--income); }
+.month-name { font-weight: 600; font-size: 14px; }
+.month-name.done { text-decoration: line-through; color: var(--muted); }
+.month-summary { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.month-chevron { color: var(--muted); font-size: 12px; transition: transform 0.2s; }
+.month-chevron.open { transform: rotate(180deg); }
+
+.month-body { display: none; border-top: 1px solid var(--border); }
+.month-body.open { display: block; }
+
+.month-table { width: 100%; }
+.mt-row { display: flex; align-items: center; padding: 9px 16px; border-bottom: 1px solid var(--border); gap: 8px; }
+.mt-row:last-child { border-bottom: none; }
+.mt-label { flex: 1; font-size: 12px; }
+.mt-tag {
+  font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 500; white-space: nowrap;
+}
+.mt-amount { font-family: 'JetBrains Mono', monospace; font-size: 12px; white-space: nowrap; }
+
+.row-income .mt-label { font-weight: 700; }
+.row-income .mt-amount { color: var(--income); font-weight: 700; }
+.row-expense .mt-amount { color: var(--text); }
+.row-debt .mt-amount { color: var(--debt-color); font-weight: 600; }
+.row-free .mt-amount { color: var(--accent); font-weight: 600; }
+.row-total { background: var(--surface2); }
+.row-total .mt-label { font-weight: 600; font-size: 11px; color: var(--muted); }
+.row-sep { background: rgba(79,140,255,0.06); padding: 6px 16px; }
+.row-sep .mt-label { font-size: 10px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; }
+
+.t-income { background: rgba(67,232,158,0.15); color: #43e89e; }
+.t-home   { background: rgba(79,140,255,0.15); color: #6baeff; }
+.t-life   { background: rgba(255,140,107,0.15); color: #ff9e80; }
+.t-cats   { background: rgba(255,200,80,0.15); color: #ffc850; }
+.t-mom    { background: rgba(255,107,176,0.15); color: #ff79c6; }
+.t-smoke  { background: rgba(160,160,180,0.15); color: #9090aa; }
+.t-ozon   { background: rgba(0,91,255,0.2); color: #6db3ff; }
+.t-tbank  { background: rgba(255,221,0,0.15); color: #ffdd00; }
+.t-free   { background: rgba(79,140,255,0.15); color: #4f8cff; }
+
+/* SETTINGS PAGE */
+.settings-section { margin-bottom: 20px; }
+.settings-title {
+  font-size: 11px; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+.settings-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-label { flex: 1; font-size: 13px; }
+.settings-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  padding: 6px 10px;
+  width: 130px;
+  text-align: right;
+  outline: none;
+}
+.settings-input:focus { border-color: var(--accent); }
+
+.btn-save {
+  width: 100%;
+  background: linear-gradient(135deg, #4f8cff, #43e89e);
+  border: none;
+  border-radius: 12px;
+  color: #0d0f14;
+  font-family: 'Geologica', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 15px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+.btn-save:active { opacity: 0.85; }
+
+.saved-toast {
+  position: fixed;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--income);
+  color: #0d0f14;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 10px 24px;
+  border-radius: 99px;
+  transition: transform 0.3s ease;
+  z-index: 999;
+}
+.saved-toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active" onclick="showPage('overview')">📊 Обзор</div>
+  <div class="tab" onclick="showPage('schedule')">📅 График</div>
+  <div class="tab" onclick="showPage('settings')">⚙️ Настройки</div>
+</div>
+
+<div id="page-overview" class="page active">
+  <div class="header">
+    <h1>Мои долги</h1>
+    <p id="overview-subtitle"></p>
+  </div>
+
+  <div class="debt-cards">
+    <div class="debt-card tbank">
+      <div class="dc-label">🏦 Т-Банк</div>
+      <div class="dc-value" id="ov-tbank-debt"></div>
+      <div class="dc-sub" id="ov-tbank-sub"></div>
+    </div>
+    <div class="debt-card ozon">
+      <div class="dc-label">📦 Озон</div>
+      <div class="dc-value" id="ov-ozon-debt"></div>
+      <div class="dc-sub" id="ov-ozon-sub"></div>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label"><span>Т-Банк погашен</span><span id="ov-tbank-pct"></span></div>
+    <div class="progress-bar"><div class="progress-fill fill-tbank" id="bar-tbank"></div></div>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-label"><span>Озон погашен</span><span id="ov-ozon-pct"></span></div>
+    <div class="progress-bar"><div class="progress-fill fill-ozon" id="bar-ozon"></div></div>
+  </div>
+
+  <div class="summary-strip">
+    <div class="strip-card">
+      <div class="strip-label">Зарплата</div>
+      <div class="strip-value" style="color:var(--income)" id="ov-salary"></div>
+    </div>
+    <div class="strip-card">
+      <div class="strip-label">Расходы</div>
+      <div class="strip-value" style="color:#ff9e80" id="ov-expenses"></div>
+    </div>
+    <div class="strip-card">
+      <div class="strip-label">На долги</div>
+      <div class="strip-value" style="color:var(--debt-color)" id="ov-to-debt"></div>
+    </div>
+  </div>
+
+  <div class="summary-strip">
+    <div class="strip-card">
+      <div class="strip-label">Общий долг</div>
+      <div class="strip-value" style="color:var(--debt-color)" id="ov-total-debt"></div>
+    </div>
+    <div class="strip-card">
+      <div class="strip-label">Т-Банк закрыт</div>
+      <div class="strip-value" style="color:var(--tbank)" id="ov-tbank-close"></div>
+    </div>
+    <div class="strip-card">
+      <div class="strip-label">Озон закрыт</div>
+      <div class="strip-value" style="color:var(--ozon)" id="ov-ozon-close"></div>
+    </div>
+  </div>
+</div>
+
+<div id="page-schedule" class="page">
+  <div id="schedule-list"></div>
+</div>
+
+<div id="page-settings" class="page">
+  <div class="settings-section">
+    <div class="settings-title">💰 Доходы</div>
+    <div class="settings-card">
+      <div class="settings-row">
+        <div class="settings-label">Зарплата (мес)</div>
+        <input class="settings-input" id="s-salary" type="number" inputmode="numeric">
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-title">🏦 Долги</div>
+    <div class="settings-card">
+      <div class="settings-row">
+        <div class="settings-label">Остаток Т-Банк</div>
+        <input class="settings-input" id="s-tbank" type="number" inputmode="numeric">
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Начальный долг Т-Банк</div>
+        <input class="settings-input" id="s-tbank-orig" type="number" inputmode="numeric">
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Остаток Озон</div>
+        <input class="settings-input" id="s-ozon" type="number" inputmode="numeric">
+      </div>
+      <div class="settings-row">
+        <div class="settings-label">Начальный долг Озон</div>
+        <input class="settings-input" id="s-ozon-orig" type="number" inputmode="numeric">
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-title">🏠 Расходы — 1-я зарплата</div>
+    <div class="settings-card">
+      <div class="settings-row"><div class="settings-label">Квартира</div><input class="settings-input" id="s-rent" type="number" inputmode="numeric"></div>
+      <div class="settings-row"><div class="settings-label">Коммуналка</div><input class="settings-input" id="s-util" type="number" inputmode="numeric"></div>
+      <div class="settings-row"><div class="settings-label">Связь</div><input class="settings-input" id="s-phone" type="number" inputmode="numeric"></div>
+      <div class="settings-row"><div class="settings-label">Наполнитель 🐱</div><input class="settings-input" id="s-litter" type="number" inputmode="numeric"></div>
+      <div class="settings-row"><div class="settings-label">На жизнь (½)</div><input class="settings-input" id="s-life1" type="number" inputmode="numeric"></div>
+      <div class="settings-row"><div class="settings-label">Проезд (½)</div><input class="settings-input" id="s-travel1" type="number" inputmode="numeric"></div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-title">🛒 Расходы — 2-я зарплата</div>
+    <div class="settings-card">
+      <div class="settings-row"><div class="settings-label">Маме</div><input class="settings-input" id="s-mom" type="number" inputmode="numeric"></div>
+      <div class="settings-row"><div class="settings-label">Корм 🐱</div><input class="settings-input" id="s-food-cats" type="number" inputmode="numeric"></div>
+      <div class="settings-row"><div class="settings-label">Сигареты</div><input class="settings-input" id="s-smoke" type="number" inputmode="numeric"></div>
+      <div class="settings-row"><div class="settings-label">Бытовая химия</div><input class="settings-input" id="s-chem" type="number" inputmode="numeric"></div>
+      <div class="settings-row"><div class="settings-label">На жизнь (½)</div><input class="settings-input" id="s-life2" type="number" inputmode="numeric"></div>
+      <div class="settings-row"><div class="settings-label">Проезд (½)</div><input class="settings-input" id="s-travel2" type="number" inputmode="numeric"></div>
+    </div>
+  </div>
+
+  <button class="btn-save" onclick="saveSettings()">💾 Сохранить</button>
+</div>
+
+<div class="saved-toast" id="toast">✅ Сохранено!</div>
+
+<script>
+// ---- DEFAULT SETTINGS ----
+const DEFAULTS = {
+  salary: 60000,
+  tbankDebt: 35648.86,
+  tbankOrig: 35648.86,
+  ozonDebt: 29994.08,
+  ozonOrig: 29994.08,
+  rent: 5000,
+  util: 3750,
+  phone: 1200,
+  litter: 1300,
+  life1: 12500,
+  travel1: 1050,
+  mom: 7800,
+  foodCats: 3000,
+  smoke: 1900,
+  chem: 1000,
+  life2: 12500,
+  travel2: 1050,
+  doneMonths: {}
+};
+
+const OZON_SCHEDULE = [
+  { key: '2026-06', label: 'Июнь 2026',     short: 'июн', amt: 3819 },
+  { key: '2026-07', label: 'Июль 2026',     short: 'июл', amt: 3819 },
+  { key: '2026-08', label: 'Август 2026',   short: 'авг', amt: 3819 },
+  { key: '2026-09', label: 'Сентябрь 2026', short: 'сен', amt: 3819 },
+  { key: '2026-10', label: 'Октябрь 2026',  short: 'окт', amt: 3819 },
+  { key: '2026-11', label: 'Ноябрь 2026',   short: 'ноя', amt: 3817.29 },
+  { key: '2026-12', label: 'Декабрь 2026',  short: 'дек', amt: 3530 },
+  { key: '2027-01', label: 'Январь 2027',   short: 'янв', amt: 3530 },
+  { key: '2027-02', label: 'Февраль 2027',  short: 'фев', amt: 3530 },
+  { key: '2027-03', label: 'Март 2027',     short: 'мар', amt: 3559.05 },
+  { key: '2027-04', label: 'Апрель 2027',   short: 'апр', amt: 684.92 },
+];
+
+// ---- STORAGE ----
+function load() {
+  try {
+    const s = localStorage.getItem('debt_plan');
+    return s ? { ...DEFAULTS, ...JSON.parse(s) } : { ...DEFAULTS };
+  } catch(e) { return { ...DEFAULTS }; }
+}
+function save(data) {
+  try { localStorage.setItem('debt_plan', JSON.stringify(data)); } catch(e) {}
+}
+
+let S = load();
+
+// ---- FORMAT ----
+const fmt = n => Math.round(Math.abs(n)).toLocaleString('ru-RU') + ' ₽';
+
+// ---- COMPUTE PLAN ----
+function computePlan() {
+  const p1exp = S.rent + S.util + S.phone + S.litter + S.life1 + S.travel1;
+  const p2exp = S.mom + S.foodCats + S.smoke + S.chem + S.life2 + S.travel2;
+  const p1free = (S.salary / 2) - p1exp;
+  const p2free = (S.salary / 2) - p2exp;
+
+  let tbDebt = S.tbankDebt;
+  let ozDebt = S.ozonDebt;
+
+  const months = OZON_SCHEDULE.map(m => {
+    const ozonAmt = m.amt;
+    let tb1 = 0, tb2 = 0, ozPay = 0, freeAfter = 0;
+
+    // Paycheck 1 → T-Bank
+    if (tbDebt > 0) {
+      tb1 = Math.min(tbDebt, p1free);
+      tbDebt = Math.max(0, tbDebt - tb1);
+    } else {
+      freeAfter += p1free;
+    }
+
+    // Paycheck 2 → Ozon first, rest to T-Bank
+    let p2rem = p2free;
+    ozPay = Math.min(ozDebt, ozonAmt);
+    ozDebt = Math.max(0, ozDebt - ozPay);
+    p2rem -= ozPay;
+
+    if (p2rem > 0) {
+      if (tbDebt > 0) {
+        tb2 = Math.min(tbDebt, p2rem);
+        tbDebt = Math.max(0, tbDebt - tb2);
+        p2rem -= tb2;
+      }
+      if (p2rem > 0) freeAfter += p2rem;
+    }
+
+    return {
+      ...m,
+      p1exp, p2exp, p1free, p2free,
+      tb1, tb2, ozPay, freeAfter,
+      tbDebtAfter: tbDebt,
+      ozDebtAfter: ozDebt,
+      totalDebtPaid: tb1 + tb2 + ozPay,
+      totalExpenses: p1exp + p2exp,
+    };
+  });
+
+  return { months, p1exp, p2exp, p1free, p2free };
+}
+
+// ---- OVERVIEW PAGE ----
+function renderOverview() {
+  const { months, p1exp, p2exp } = computePlan();
+  const totalExp = p1exp + p2exp;
+  const toDebt = S.salary - totalExp;
+
+  // Вычисляем реальный остаток долга с учётом отмеченных месяцев
+  let tbRemain = S.tbankDebt;
+  let ozRemain = S.ozonDebt;
+  months.forEach(m => {
+    if (S.doneMonths && S.doneMonths[m.key]) {
+      tbRemain = Math.max(0, tbRemain - m.tb1 - m.tb2);
+      ozRemain = Math.max(0, ozRemain - m.ozPay);
+    }
+  });
+
+  document.getElementById('ov-salary').textContent = fmt(S.salary);
+  document.getElementById('ov-expenses').textContent = fmt(totalExp);
+  document.getElementById('ov-to-debt').textContent = fmt(toDebt);
+  document.getElementById('ov-total-debt').textContent = fmt(tbRemain + ozRemain);
+
+  document.getElementById('ov-tbank-debt').textContent = fmt(tbRemain);
+  document.getElementById('ov-ozon-debt').textContent = fmt(ozRemain);
+
+  // Find close months
+  let tbClose = '—', ozClose = '—';
+  months.forEach(m => {
+    if (m.tbDebtAfter <= 0 && tbClose === '—') tbClose = m.label.split(' ')[0];
+    if (m.ozDebtAfter <= 0 && ozClose === '—') ozClose = m.label.split(' ')[0];
+  });
+  document.getElementById('ov-tbank-close').textContent = tbClose;
+  document.getElementById('ov-ozon-close').textContent = ozClose;
+
+  // Progress — считается от начального долга с учётом реально погашенного
+  const tbPct = S.tbankOrig > 0 ? Math.min(100, Math.round((1 - tbRemain / S.tbankOrig) * 100)) : 0;
+  const ozPct = S.ozonOrig  > 0 ? Math.min(100, Math.round((1 - ozRemain / S.ozonOrig)  * 100)) : 0;
+  document.getElementById('ov-tbank-pct').textContent = tbPct + '%';
+  document.getElementById('ov-ozon-pct').textContent = ozPct + '%';
+  document.getElementById('bar-tbank').style.width = tbPct + '%';
+  document.getElementById('bar-ozon').style.width = ozPct + '%';
+
+  document.getElementById('ov-tbank-sub').textContent = `39,9% год. · мин. 8%`;
+  document.getElementById('ov-ozon-sub').textContent = `по графику до апр 2027`;
+  document.getElementById('overview-subtitle').textContent = `Общий долг: ${fmt(tbRemain + ozRemain)}`;
+}
+
+// ---- SCHEDULE PAGE ----
+function renderSchedule() {
+  const { months, p1exp, p2exp, p1free, p2free } = computePlan();
+  const half = S.salary / 2;
+
+  let html = '';
+
+  months.forEach(m => {
+    const done = S.doneMonths && S.doneMonths[m.key];
+    const doneClass = done ? 'done' : '';
+    const toggleClass = done ? 'done' : '';
+
+    html += `<div class="month-card">
+      <div class="month-header" onclick="toggleMonth('${m.key}')">
+        <div class="month-header-left">
+          <div class="month-done-toggle ${toggleClass}" onclick="toggleDone(event,'${m.key}')">${done ? '✓' : ''}</div>
+          <div>
+            <div class="month-name ${doneClass}">${m.label}</div>
+            <div class="month-summary">Расходы ${fmt(m.totalExpenses)} · Долги ${fmt(m.totalDebtPaid)}</div>
+          </div>
+        </div>
+        <div class="month-chevron" id="chev-${m.key}">▼</div>
+      </div>
+      <div class="month-body" id="body-${m.key}">
+        <div class="month-table">
+
+          <div class="mt-row row-sep"><div class="mt-label">💰 1-я зарплата (1–3 ${m.short})</div></div>
+          <div class="mt-row row-income">
+            <div class="mt-label">Зарплата — 1-я часть</div>
+            <span class="mt-tag t-income">Доход</span>
+            <div class="mt-amount">+${fmt(half)}</div>
+          </div>
+          <div class="mt-row row-expense"><div class="mt-label">Квартира</div><span class="mt-tag t-home">Жильё</span><div class="mt-amount">−${fmt(S.rent)}</div></div>
+          <div class="mt-row row-expense"><div class="mt-label">Коммуналка</div><span class="mt-tag t-home">Жильё</span><div class="mt-amount">−${fmt(S.util)}</div></div>
+          <div class="mt-row row-expense"><div class="mt-label">Связь</div><span class="mt-tag t-home">Жильё</span><div class="mt-amount">−${fmt(S.phone)}</div></div>
+          <div class="mt-row row-expense"><div class="mt-label">Наполнитель 🐱</div><span class="mt-tag t-cats">Коты</span><div class="mt-amount">−${fmt(S.litter)}</div></div>
+          <div class="mt-row row-expense"><div class="mt-label">На жизнь (½)</div><span class="mt-tag t-life">Жизнь</span><div class="mt-amount">−${fmt(S.life1)}</div></div>
+          <div class="mt-row row-expense"><div class="mt-label">Проезд (½)</div><span class="mt-tag t-life">Жизнь</span><div class="mt-amount">−${fmt(S.travel1)}</div></div>
+          ${m.tb1 > 0 ? `<div class="mt-row row-debt"><div class="mt-label">🏦 Т-Банк — погашение (9 ${m.short})</div><span class="mt-tag t-tbank">Т-Банк</span><div class="mt-amount">−${fmt(m.tb1)}</div></div>` : ''}
+          ${m.tb1 === 0 && p1free > 0 ? `<div class="mt-row row-free"><div class="mt-label">💚 В резерв</div><span class="mt-tag t-free">Свободно</span><div class="mt-amount">+${fmt(p1free)}</div></div>` : ''}
+
+          <div class="mt-row row-sep"><div class="mt-label">💰 2-я зарплата (17–19 ${m.short})</div></div>
+          <div class="mt-row row-income">
+            <div class="mt-label">Зарплата — 2-я часть</div>
+            <span class="mt-tag t-income">Доход</span>
+            <div class="mt-amount">+${fmt(half)}</div>
+          </div>
+          <div class="mt-row row-expense"><div class="mt-label">Маме</div><span class="mt-tag t-mom">Семья</span><div class="mt-amount">−${fmt(S.mom)}</div></div>
+          <div class="mt-row row-expense"><div class="mt-label">Корм 🐱</div><span class="mt-tag t-cats">Коты</span><div class="mt-amount">−${fmt(S.foodCats)}</div></div>
+          <div class="mt-row row-expense"><div class="mt-label">Сигареты</div><span class="mt-tag t-smoke">Прочее</span><div class="mt-amount">−${fmt(S.smoke)}</div></div>
+          <div class="mt-row row-expense"><div class="mt-label">Бытовая химия</div><span class="mt-tag t-life">Жизнь</span><div class="mt-amount">−${fmt(S.chem)}</div></div>
+          <div class="mt-row row-expense"><div class="mt-label">На жизнь (½)</div><span class="mt-tag t-life">Жизнь</span><div class="mt-amount">−${fmt(S.life2)}</div></div>
+          <div class="mt-row row-expense"><div class="mt-label">Проезд (½)</div><span class="mt-tag t-life">Жизнь</span><div class="mt-amount">−${fmt(S.travel2)}</div></div>
+          ${m.ozPay > 0 ? `<div class="mt-row row-debt"><div class="mt-label">📦 Озон — по графику (19 ${m.short})</div><span class="mt-tag t-ozon">Озон</span><div class="mt-amount">−${fmt(m.ozPay)}</div></div>` : ''}
+          ${m.tb2 > 0 ? `<div class="mt-row row-debt"><div class="mt-label">🏦 Т-Банк — доп. погашение</div><span class="mt-tag t-tbank">Т-Банк</span><div class="mt-amount">−${fmt(m.tb2)}</div></div>` : ''}
+          ${m.freeAfter > 0 ? `<div class="mt-row row-free"><div class="mt-label">💚 Свободные деньги — в резерв</div><span class="mt-tag t-free">Свободно</span><div class="mt-amount">+${fmt(m.freeAfter)}</div></div>` : ''}
+
+          <div class="mt-row row-total">
+            <div class="mt-label">📊 Итог месяца</div>
+            <div class="mt-amount" style="font-size:11px;color:var(--muted)">
+              расходы −${fmt(m.totalExpenses)} · долги −${fmt(m.totalDebtPaid)}
+              ${m.tbDebtAfter <= 0 ? ' · ✅ Т-Банк закрыт!' : ''}
+              ${m.ozDebtAfter <= 0 ? ' · ✅ Озон закрыт!' : ''}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>`;
+  });
+
+  html += `<div style="text-align:center;padding:20px;color:var(--income);font-weight:700;font-size:14px">
+    🏁 Все долги закрыты к апрелю 2027!
+  </div>`;
+
+  document.getElementById('schedule-list').innerHTML = html;
+}
+
+// ---- SETTINGS PAGE ----
+function renderSettings() {
+  document.getElementById('s-salary').value = S.salary;
+  document.getElementById('s-tbank').value = S.tbankDebt;
+  document.getElementById('s-tbank-orig').value = S.tbankOrig;
+  document.getElementById('s-ozon').value = S.ozonDebt;
+  document.getElementById('s-ozon-orig').value = S.ozonOrig;
+  document.getElementById('s-rent').value = S.rent;
+  document.getElementById('s-util').value = S.util;
+  document.getElementById('s-phone').value = S.phone;
+  document.getElementById('s-litter').value = S.litter;
+  document.getElementById('s-life1').value = S.life1;
+  document.getElementById('s-travel1').value = S.travel1;
+  document.getElementById('s-mom').value = S.mom;
+  document.getElementById('s-food-cats').value = S.foodCats;
+  document.getElementById('s-smoke').value = S.smoke;
+  document.getElementById('s-chem').value = S.chem;
+  document.getElementById('s-life2').value = S.life2;
+  document.getElementById('s-travel2').value = S.travel2;
+}
+
+function saveSettings() {
+  const g = id => parseFloat(document.getElementById(id).value) || 0;
+  S.salary    = g('s-salary');
+  S.tbankDebt = g('s-tbank');
+  S.tbankOrig = g('s-tbank-orig');
+  S.ozonDebt  = g('s-ozon');
+  S.ozonOrig  = g('s-ozon-orig');
+  S.rent      = g('s-rent');
+  S.util      = g('s-util');
+  S.phone     = g('s-phone');
+  S.litter    = g('s-litter');
+  S.life1     = g('s-life1');
+  S.travel1   = g('s-travel1');
+  S.mom       = g('s-mom');
+  S.foodCats  = g('s-food-cats');
+  S.smoke     = g('s-smoke');
+  S.chem      = g('s-chem');
+  S.life2     = g('s-life2');
+  S.travel2   = g('s-travel2');
+  save(S);
+  renderOverview();
+  renderSchedule();
+
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+// ---- INTERACTIONS ----
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+function toggleMonth(key) {
+  const body = document.getElementById('body-' + key);
+  const chev = document.getElementById('chev-' + key);
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+function toggleDone(e, key) {
+  e.stopPropagation();
+  if (!S.doneMonths) S.doneMonths = {};
+  S.doneMonths[key] = !S.doneMonths[key];
+  save(S);
+  renderSchedule();
+}
+
+// ---- INIT ----
+renderOverview();
+renderSchedule();
+renderSettings();
+</script>
+</body>
+</html>
