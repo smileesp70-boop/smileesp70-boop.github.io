@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Мой финансовый план</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f5fb;
+  --surface: #ffffff;
+  --surface2: #eef0fa;
+  --border: #e0e3f0;
+  --accent: #5b5ff0;
+  --accent-soft: rgba(91,95,240,0.10);
+  --text: #191b2e;
+  --muted: #8388a8;
+  --income: #16a672;
+  --income-soft: rgba(22,166,114,0.10);
+  --debt: #e14a5c;
+  --debt-soft: rgba(225,74,92,0.10);
+  --warn: #e08a2c;
+  --warn-soft: rgba(224,138,44,0.12);
+  --shadow: 0 3px 16px rgba(40,50,110,0.07);
+  --radius: 16px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: var(--bg); color: var(--text); font-family: 'Manrope', sans-serif; min-height: 100vh; padding-bottom: 48px; }
+
+.tabs { display: flex; background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); overflow-x: auto; }
+.tab { flex: 1; padding: 15px 6px; text-align: center; font-size: 11.5px; font-weight: 700; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px; transition: all 0.2s; white-space: nowrap; }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+.page { display: none; padding: 16px; max-width: 560px; margin: 0 auto; }
+.page.active { display: block; }
+
+.header { margin-bottom: 18px; padding-top: 6px; }
+.header h1 { font-size: 21px; font-weight: 800; }
+.header p { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+
+.hero { background: linear-gradient(145deg, #16a672 0%, #1fc78e 100%); border-radius: 20px; padding: 20px; color: #fff; margin-bottom: 16px; box-shadow: 0 8px 24px rgba(22,166,114,0.28); }
+.hero.hero-loan { background: linear-gradient(145deg, #5b5ff0 0%, #7b6ff5 100%); box-shadow: 0 8px 24px rgba(91,95,240,0.28); }
+.hero-label { font-size: 11px; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; margin-bottom: 6px; }
+.hero-value { font-family: 'JetBrains Mono', monospace; font-size: 30px; font-weight: 700; margin-bottom: 10px; }
+.hero-row { display: flex; justify-content: space-between; font-size: 12px; opacity: 0.92; margin-bottom: 4px; }
+.hero-bar { height: 7px; background: rgba(255,255,255,0.25); border-radius: 99px; overflow: hidden; margin-top: 10px; }
+.hero-fill { height: 100%; background: #fff; border-radius: 99px; transition: width 0.5s ease; }
+.hero-hint { font-size: 10.5px; opacity: 0.8; margin-top: 6px; line-height: 1.5; }
+
+.summary-strip { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+.strip-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 12px 8px; text-align: center; box-shadow: var(--shadow); }
+.strip-label { font-size: 9.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 5px; font-weight: 700; }
+.strip-value { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; }
+
+.tip-card { background: var(--accent-soft); border: 1px solid rgba(91,95,240,0.18); border-radius: 16px; padding: 15px 16px; margin-bottom: 10px; }
+.tip-title { font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 7px; }
+.tip-body { font-size: 13px; line-height: 1.55; }
+.tip-body b { color: var(--accent); }
+
+.section-title { font-size: 11.5px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin: 20px 2px 9px; }
+.section-title:first-child { margin-top: 0; }
+
+.calc-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; box-shadow: var(--shadow); }
+.calc-input-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.calc-input-row label { flex: 1; font-size: 13px; font-weight: 600; }
+.calc-input-row input { width: 130px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 14px; padding: 9px 10px; text-align: right; outline: none; }
+.calc-input-row input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.calc-hint { font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+.calc-result { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.calc-result-cell { background: var(--surface2); border-radius: 12px; padding: 10px 12px; }
+.calc-result-label { font-size: 9.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; margin-bottom: 4px; }
+.calc-result-value { font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 700; }
+.calc-result-value.pos { color: var(--income); }
+.calc-result-value.neu { color: var(--text); }
+
+.preset-table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); margin-bottom: 14px; }
+.preset-table th { background: var(--surface2); font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); padding: 10px 8px; text-align: right; font-weight: 700; }
+.preset-table th:first-child { text-align: left; }
+.preset-table td { padding: 11px 8px; font-family: 'JetBrains Mono', monospace; font-size: 12px; text-align: right; border-top: 1px solid var(--border); }
+.preset-table td:first-child { text-align: left; font-family: 'Manrope', sans-serif; font-weight: 600; font-size: 12.5px; }
+.preset-table tr.best td { background: var(--income-soft); font-weight: 700; }
+.preset-table td.save { color: var(--income); font-weight: 700; }
+
+.month-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; box-shadow: var(--shadow); }
+.month-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; cursor: pointer; }
+.month-header-left { display: flex; align-items: center; gap: 10px; }
+.month-done-toggle { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; transition: all 0.2s; background: var(--surface); }
+.month-done-toggle.done { background: var(--income); border-color: var(--income); color: #fff; }
+.month-name { font-weight: 700; font-size: 14px; }
+.month-name.done { text-decoration: line-through; color: var(--muted); }
+.month-summary { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.month-chevron { color: var(--muted); font-size: 12px; transition: transform 0.2s; }
+.month-chevron.open { transform: rotate(180deg); }
+.month-body { display: none; border-top: 1px solid var(--border); }
+.month-body.open { display: block; }
+.mt-row { display: flex; align-items: center; padding: 10px 16px; border-bottom: 1px solid var(--border); gap: 8px; }
+.mt-row:last-child { border-bottom: none; }
+.mt-label { flex: 1; font-size: 12.5px; }
+.mt-tag { font-size: 9px; padding: 2px 6px; border-radius: 5px; font-weight: 700; white-space: nowrap; }
+.mt-amount { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; white-space: nowrap; }
+.mt-inline-amount { width: 76px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; text-align: right; border: 1px solid var(--border); background: var(--surface2); border-radius: 7px; padding: 5px 7px; outline: none; flex-shrink: 0; }
+.mt-inline-amount:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.mini-reset { width: 22px; height: 22px; border: none; background: var(--accent-soft); color: var(--accent); border-radius: 7px; font-size: 12px; cursor: pointer; flex-shrink: 0; }
+.pay-check { width: 21px; height: 21px; border-radius: 6px; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all 0.15s; background: var(--surface); font-size: 11px; user-select: none; }
+.pay-check.paid { background: var(--income); border-color: var(--income); color: #fff; }
+.mt-row.paid-row { opacity: 0.5; }
+.mt-row.paid-row .mt-amount { text-decoration: line-through; }
+.row-income .mt-label { font-weight: 700; }
+.row-income .mt-amount { color: var(--income); font-weight: 700; }
+.row-debt .mt-amount { color: var(--debt); font-weight: 700; }
+.row-free .mt-amount { color: var(--accent); font-weight: 700; }
+.row-warn .mt-amount { color: var(--warn); font-weight: 700; }
+.row-total { background: var(--surface2); }
+.row-total .mt-label { font-weight: 700; font-size: 11px; color: var(--muted); }
+.row-sep { background: rgba(91,95,240,0.05); padding: 7px 16px; }
+.row-sep .mt-label { font-size: 10px; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; }
+.t-income { background: rgba(22,166,114,0.12); color: #0e8659; }
+.t-exp    { background: rgba(131,136,168,0.14); color: #5c6180; }
+.t-loan   { background: var(--debt-soft); color: #c23448; }
+.t-free   { background: var(--accent-soft); color: var(--accent); }
+.t-custom { background: rgba(160,80,230,0.10); color: #8840d0; }
+.t-warn   { background: var(--warn-soft); color: #b5690f; }
+
+.btn-add-in-month { display: flex; align-items: center; gap: 6px; padding: 11px 16px; cursor: pointer; color: var(--accent); font-size: 12.5px; font-weight: 700; border: none; background: rgba(91,95,240,0.04); width: 100%; text-align: left; }
+.btn-add-in-month:hover { background: rgba(91,95,240,0.1); }
+.inline-add-form { padding: 10px 16px 12px; border-top: 1px solid var(--border); background: rgba(91,95,240,0.03); display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.inline-add-form input, .inline-add-form select { background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; color: var(--text); font-family: 'Manrope', sans-serif; font-size: 12.5px; padding: 8px 10px; outline: none; }
+.inline-name { flex: 1; min-width: 100px; }
+.inline-amount { width: 90px; font-family: 'JetBrains Mono', monospace !important; text-align: right; }
+.inline-half { width: 78px; }
+.inline-type { width: 84px; }
+.inline-btns { display: flex; gap: 6px; }
+.btn-inline-ok { background: var(--accent); color: #fff; border: none; border-radius: 9px; padding: 8px 14px; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.btn-inline-cancel { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); border-radius: 9px; padding: 8px 10px; font-size: 12.5px; cursor: pointer; }
+
+.settings-section { margin-bottom: 18px; }
+.settings-title { font-size: 11.5px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 9px; padding-left: 2px; }
+.settings-hint { font-size: 11.5px; color: var(--muted); margin: -5px 0 10px 2px; line-height: 1.5; }
+.settings-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+.settings-row { display: flex; align-items: center; padding: 13px 16px; border-bottom: 1px solid var(--border); gap: 12px; }
+.settings-row:last-child { border-bottom: none; }
+.settings-label { flex: 1; font-size: 13px; }
+.settings-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 7px 10px; width: 120px; text-align: right; outline: none; }
+.settings-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.settings-input.wide { width: 100%; text-align: left; font-family: 'Manrope', sans-serif; }
+
+.expense-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.expense-row { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow); }
+.expense-row.income-row { border-left: 3px solid var(--income); }
+.expense-row.expense-item { border-left: 3px solid var(--debt); }
+.expense-row input[type=text] { flex: 1; min-width: 0; border: none; background: transparent; font-family: 'Manrope', sans-serif; font-size: 13px; font-weight: 600; color: var(--text); outline: none; }
+.expense-row input[type=number] { width: 84px; border: 1px solid var(--border); background: var(--surface2); border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; text-align: right; padding: 6px 8px; outline: none; }
+.expense-row select { border: 1px solid var(--border); background: var(--surface2); border-radius: 8px; font-size: 11.5px; padding: 6px 4px; outline: none; color: var(--text); }
+.expense-row .btn-del { width: 26px; height: 26px; border-radius: 8px; background: var(--debt-soft); border: none; color: var(--debt); font-size: 13px; cursor: pointer; flex-shrink: 0; }
+.btn-add-expense { width: 100%; background: var(--accent-soft); color: var(--accent); border: 1.5px dashed rgba(91,95,240,0.4); border-radius: 14px; padding: 12px; font-size: 13px; font-weight: 700; cursor: pointer; margin-bottom: 18px; }
+.btn-add-income { width: 100%; background: var(--income-soft); color: var(--income); border: 1.5px dashed rgba(22,166,114,0.4); border-radius: 14px; padding: 12px; font-size: 13px; font-weight: 700; cursor: pointer; margin-bottom: 18px; }
+
+.btn-save { width: 100%; background: linear-gradient(135deg, #5b5ff0, #16a672); border: none; border-radius: 14px; color: #fff; font-size: 15px; font-weight: 800; padding: 16px; cursor: pointer; margin-top: 4px; box-shadow: 0 6px 18px rgba(91,95,240,0.3); }
+.btn-save:active { opacity: 0.85; }
+.saved-toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--income); color: #fff; font-weight: 700; font-size: 13px; padding: 11px 26px; border-radius: 99px; transition: transform 0.3s ease; z-index: 999; box-shadow: 0 4px 16px rgba(22,166,114,0.35); }
+.saved-toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="tabs">
+  <div class="tab active" onclick="showPage('overview', event)">📊 Обзор</div>
+  <div class="tab" onclick="showPage('schedule', event)">📅 График</div>
+  <div class="tab" onclick="showPage('loan', event)">🧮 Кредит</div>
+  <div class="tab" onclick="showPage('settings', event)">⚙️ Мои данные</div>
+</div>
+
+<!-- OVERVIEW -->
+<div id="page-overview" class="page active">
+  <div class="header"><h1>Финансовый план</h1><p id="overview-subtitle"></p></div>
+
+  <div class="hero">
+    <div class="hero-label">Свободные деньги в месяц</div>
+    <div class="hero-value" id="ov-free"></div>
+    <div class="hero-row"><span>Зарплата</span><span id="ov-salary"></span></div>
+    <div class="hero-row"><span>Доп. доходы</span><span id="ov-extra-income"></span></div>
+    <div class="hero-row"><span>Расходы</span><span id="ov-expenses"></span></div>
+    <div class="hero-row"><span>Платёж по кредиту</span><span id="ov-payment"></span></div>
+    <div class="hero-hint" id="hero-hint"></div>
+  </div>
+
+  <div class="tip-card">
+    <div class="tip-title">💡 Совет</div>
+    <div class="tip-body" id="ov-tip"></div>
+  </div>
+</div>
+
+<div id="page-schedule" class="page">
+  <div id="schedule-list"></div>
+</div>
+
+<!-- LOAN CALCULATOR -->
+<div id="page-loan" class="page">
+  <div class="header"><h1>Кредит</h1><p>Считаем, сколько лучше вносить досрочно</p></div>
+
+  <div class="hero hero-loan">
+    <div class="hero-label">Остаток по кредиту</div>
+    <div class="hero-value" id="lc-balance"></div>
+    <div class="hero-row"><span>Ставка</span><span id="lc-rate"></span></div>
+    <div class="hero-row"><span>Текущий платёж</span><span id="lc-payment"></span></div>
+    <div class="hero-row"><span>Осталось платежей</span><span id="lc-months-left"></span></div>
+    <div class="hero-row"><span>Плановое закрытие</span><span id="lc-close"></span></div>
+    <div class="hero-bar"><div class="hero-fill" id="lc-bar"></div></div>
+  </div>
+
+  <div class="section-title">Прибавка к ежемесячному платежу</div>
+  <div class="calc-card">
+    <div class="calc-input-row">
+      <label>Доплата в месяц сверх графика</label>
+      <input type="number" inputmode="numeric" id="lc-extra-monthly" value="0" oninput="renderLoanCalc()">
+    </div>
+    <div class="calc-hint">Сколько добавляете к обязательному платежу каждый месяц</div>
+    <div class="calc-result">
+      <div class="calc-result-cell"><div class="calc-result-label">Новый срок</div><div class="calc-result-value neu" id="lc-em-term"></div></div>
+      <div class="calc-result-cell"><div class="calc-result-label">Быстрее на</div><div class="calc-result-value pos" id="lc-em-faster"></div></div>
+      <div class="calc-result-cell"><div class="calc-result-label">Экономия на % </div><div class="calc-result-value pos" id="lc-em-save"></div></div>
+      <div class="calc-result-cell"><div class="calc-result-label">Новый платёж</div><div class="calc-result-value neu" id="lc-em-payment"></div></div>
+    </div>
+  </div>
+
+  <div class="section-title">Разовый досрочный взнос</div>
+  <div class="calc-card">
+    <div class="calc-input-row">
+      <label>Сумма разового взноса</label>
+      <input type="number" inputmode="numeric" id="lc-lump" value="0" oninput="renderLoanCalc()">
+    </div>
+    <div class="calc-hint">Вносится один раз сейчас, дальше платите как обычно — срок сократится</div>
+    <div class="calc-result">
+      <div class="calc-result-cell"><div class="calc-result-label">Новый срок</div><div class="calc-result-value neu" id="lc-lp-term"></div></div>
+      <div class="calc-result-cell"><div class="calc-result-label">Быстрее на</div><div class="calc-result-value pos" id="lc-lp-faster"></div></div>
+      <div class="calc-result-cell"><div class="calc-result-label">Экономия на % </div><div class="calc-result-value pos" id="lc-lp-save"></div></div>
+      <div class="calc-result-cell"><div class="calc-result-label">Остаток после взноса</div><div class="calc-result-value neu" id="lc-lp-remain"></div></div>
+    </div>
+  </div>
+
+  <div class="section-title">Какую сумму выбрать</div>
+  <table class="preset-table" id="lc-preset-table"></table>
+  <div class="tip-card">
+    <div class="tip-body" id="lc-tip"></div>
+  </div>
+</div>
+
+<div id="page-settings" class="page">
+  <div class="settings-section">
+    <div class="settings-title">💰 Зарплата</div>
+    <div class="settings-card">
+      <div class="settings-row"><div class="settings-label">Зарплата в месяц</div><input class="settings-input" id="s-salary" type="number" inputmode="numeric"></div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-title">💵 Дополнительные доходы</div>
+    <div class="settings-hint">Регулярные источники сверх зарплаты — подработка, доплаты и т.п. Разовые доходы за конкретный месяц удобнее добавлять прямо в «Графике».</div>
+    <div class="expense-list" id="income-list"></div>
+    <button class="btn-add-income" onclick="addIncomeRow()">＋ Добавить источник дохода</button>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-title">🏦 Кредит</div>
+    <div class="settings-hint">Платёж списывается целиком одной суммой в указанное число — считаем его из 1-й зарплаты месяца.</div>
+    <div class="settings-card">
+      <div class="settings-row"><div class="settings-label">Текущий остаток</div><input class="settings-input" id="s-loan-balance" type="number" inputmode="numeric"></div>
+      <div class="settings-row"><div class="settings-label">Ставка, % годовых</div><input class="settings-input" id="s-loan-rate" type="number" step="0.1" inputmode="decimal"></div>
+      <div class="settings-row"><div class="settings-label">Оставшийся срок, мес</div><input class="settings-input" id="s-loan-term" type="number" inputmode="numeric"></div>
+      <div class="settings-row"><div class="settings-label">Число списания платежа</div><input class="settings-input" id="s-loan-day" type="number" min="1" max="28" inputmode="numeric"></div>
+      <div class="settings-row"><div class="settings-label">Первый платёж (месяц)</div><input class="settings-input wide" id="s-loan-start" type="month"></div>
+    </div>
+  </div>
+
+  <div class="settings-section">
+    <div class="settings-title">🧾 Мои расходы</div>
+    <div class="settings-hint">Добавляйте, переименовывайте и удаляйте статьи расходов — список полностью ваш. «1-я / 2-я зп» — из какой части зарплаты платится.</div>
+    <div class="expense-list" id="expense-list"></div>
+    <button class="btn-add-expense" onclick="addExpenseRow()">＋ Добавить статью расхода</button>
+  </div>
+
+  <button class="btn-save" onclick="saveSettings()">💾 Сохранить изменения</button>
+</div>
+
+<div class="saved-toast" id="toast">✅ Сохранено!</div>
+
+<script>
+const RU_MONTHS = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const RU_SHORT  = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+
+const DEFAULTS = {
+  salary: 60000,
+  loan: { balance: 142000, rate: 36.5, term: 24, day: 6, start: '2026-09' },
+  extraIncomes: [],
+  expenses: [
+    { id:'e1', name:'Квартира', amount:5000, half:1 },
+    { id:'e3', name:'Связь', amount:1200, half:1 },
+    { id:'e5', name:'На жизнь', amount:12500, half:1 },
+    { id:'e6', name:'Проезд', amount:1050, half:1 },
+    { id:'e2', name:'Коммуналка', amount:3750, half:2 },
+    { id:'e8', name:'Сигареты', amount:2200, half:2 },
+    { id:'e7', name:'Коты 🐱', amount:4000, half:2 },
+    { id:'e9', name:'Бытовая химия', amount:2000, half:2 },
+    { id:'e10', name:'На жизнь', amount:12500, half:2 },
+    { id:'e11', name:'Проезд', amount:1050, half:2 },
+  ],
+  doneMonths: {},
+  paidItems: {},
+  // customExpenses[monthKey] = [{ id, name, amount, half, type: 'expense' | 'income' }] — разовые доходы/расходы конкретного месяца
+  customExpenses: {},
+  // expenseOverrides[monthKey] = { expenseId: amount } — корректировка суммы регулярной статьи только для этого месяца
+  expenseOverrides: {}
+};
+
+function load() {
+  try {
+    const s = localStorage.getItem('debt_plan_v7');
+    const parsed = s ? JSON.parse(s) : {};
+    return { ...structuredClone(DEFAULTS), ...parsed, loan: { ...DEFAULTS.loan, ...(parsed.loan||{}) } };
+  } catch(e) { return structuredClone(DEFAULTS); }
+}
+function save(data) { try { localStorage.setItem('debt_plan_v7', JSON.stringify(data)); } catch(e) {} }
+
+let S = load();
+let openMonths = new Set(); // какие карточки месяцев раскрыты — держим отдельно от S, чтобы не сворачивались при перерисовке
+const fmt = n => Math.round(Math.abs(n)).toLocaleString('ru-RU') + ' ₽';
+const uid = () => 'e' + Date.now() + Math.floor(Math.random()*1000);
+
+function annuityPayment(balance, ratePct, term) {
+  const r = (ratePct||0) / 100 / 12;
+  if (!balance || !term) return 0;
+  return r === 0 ? balance / term : balance * r / (1 - Math.pow(1 + r, -term));
+}
+
+// ---- ANNUITY SCHEDULE FOR THE SCHEDULE TAB ----
+function buildLoanSchedule() {
+  const { balance, rate, term, day, start } = S.loan;
+  const months = [];
+  if (!balance || !term || term < 1) return months;
+  const r = (rate || 0) / 100 / 12;
+  const payment = annuityPayment(balance, rate, term);
+  let bal = balance;
+  let [y, m] = (start || '2026-01').split('-').map(Number);
+  for (let i = 1; i <= term; i++) {
+    const interest = bal * r;
+    let principal = payment - interest;
+    let pay = payment;
+    if (i === term || principal >= bal) { principal = bal; pay = principal + interest; }
+    bal = Math.max(0, bal - principal);
+    months.push({
+      key: `${y}-${String(m).padStart(2,'0')}`,
+      label: `${RU_MONTHS[m-1]} ${y}`, short: RU_SHORT[m-1],
+      payment: pay, principal, interest, balance: bal, day
+    });
+    m++; if (m > 12) { m = 1; y++; }
+  }
+  return months;
+}
+
+function amortizeWithPayment(balance, ratePct, payment) {
+  const r = (ratePct||0) / 100 / 12;
+  let bal = balance, totalInterest = 0, months = 0;
+  if (payment <= bal * r) return { months: Infinity, totalInterest: Infinity };
+  while (bal > 0.5 && months < 1200) {
+    const interest = bal * r;
+    let principal = payment - interest;
+    if (principal > bal) principal = bal;
+    bal -= principal;
+    totalInterest += interest;
+    months++;
+  }
+  return { months, totalInterest };
+}
+
+// ---- MAIN PLAN: платёж по кредиту списывается ЦЕЛИКОМ из 1-й зарплаты.
+// Если чего-то не хватает (из-за разового расхода и т.п.) — деньги автоматически
+// забираются из статьи «На жизнь» этой половины месяца, без предупреждений о дефиците.
+function computePlan() {
+  const exp1Base = S.expenses.filter(e => e.half === 1).reduce((a,e)=>a+(e.amount||0),0);
+  const exp2Base = S.expenses.filter(e => e.half === 2).reduce((a,e)=>a+(e.amount||0),0);
+  const inc1extra = S.extraIncomes.filter(e => e.half === 1).reduce((a,e)=>a+(e.amount||0),0);
+  const inc2extra = S.extraIncomes.filter(e => e.half === 2).reduce((a,e)=>a+(e.amount||0),0);
+  const totalExtraIncome = inc1extra + inc2extra;
+
+  const schedule = buildLoanSchedule();
+  const isFlex = e => (e.name || '').trim().toLowerCase() === 'на жизнь';
+
+  // считает статьи расхода половины месяца, автоматически ужимая «На жизнь»,
+  // если денег не хватает на всё (включая, для 1-й зп, платёж по кредиту)
+  function settleHalf(items, income, customExpense, loanShare) {
+    const flexIndex = items.findIndex(isFlex);
+    const fixedSum = items.reduce((a,e,i)=> a + (i === flexIndex ? 0 : (e.amount||0)), 0);
+    const currentFlexAmt = flexIndex >= 0 ? items[flexIndex].amount : 0;
+    const leftoverBeforeFlex = income - fixedSum - customExpense - loanShare;
+    const effectiveFlex = flexIndex >= 0 ? Math.min(currentFlexAmt, leftoverBeforeFlex) : currentFlexAmt;
+    const items2 = flexIndex >= 0 ? items.map((e,i) => i === flexIndex ? { ...e, amount: effectiveFlex } : e) : items;
+    const total = fixedSum + effectiveFlex;
+    const free = Math.max(0, leftoverBeforeFlex - effectiveFlex);
+    return { items: items2, total, free };
+  }
+
+  const months = schedule.map(m => {
+    const overrides = S.expenseOverrides[m.key] || {};
+    const rawExp1Items = S.expenses.filter(e => e.half === 1).map(e => ({ ...e, amount: overrides[e.id] !== undefined ? overrides[e.id] : e.amount }));
+    const rawExp2Items = S.expenses.filter(e => e.half === 2).map(e => ({ ...e, amount: overrides[e.id] !== undefined ? overrides[e.id] : e.amount }));
+
+    const customs = S.customExpenses[m.key] || [];
+    const customExp1 = customs.filter(c => c.half === 1 && c.type !== 'income').reduce((a,c)=>a+(c.amount||0),0);
+    const customExp2 = customs.filter(c => c.half === 2 && c.type !== 'income').reduce((a,c)=>a+(c.amount||0),0);
+    const customInc1 = customs.filter(c => c.half === 1 && c.type === 'income').reduce((a,c)=>a+(c.amount||0),0);
+    const customInc2 = customs.filter(c => c.half === 2 && c.type === 'income').reduce((a,c)=>a+(c.amount||0),0);
+
+    const income1 = (S.salary / 2) + inc1extra + customInc1;
+    const income2 = (S.salary / 2) + inc2extra + customInc2;
+    const scheduled = m.payment;
+
+    const half1 = settleHalf(rawExp1Items, income1, customExp1, scheduled);
+    const half2 = settleHalf(rawExp2Items, income2, customExp2, 0);
+
+    const loanPay1 = scheduled; // всегда покрывается целиком — недостающее забирается из «На жизнь»
+
+    return {
+      ...m, customs, customExp1, customExp2, customInc1, customInc2,
+      exp1Items: half1.items, exp2Items: half2.items,
+      exp1: half1.total, exp2: half2.total,
+      inc1extra: inc1extra + customInc1, inc2extra: inc2extra + customInc2,
+      loanPay1, free1: half1.free, free2: half2.free,
+      totalDebtPaid: loanPay1,
+      totalExpenses: half1.total + half2.total + customExp1 + customExp2,
+    };
+  });
+
+  return { months, exp1Base, exp2Base, inc1extra, inc2extra, totalExtraIncome, schedulePayment: schedule[0] ? schedule[0].payment : 0 };
+}
+
+function setExpenseOverride(monthKey, expId, value, defaultAmt) {
+  const val = parseFloat(value) || 0;
+  if (!S.expenseOverrides[monthKey]) S.expenseOverrides[monthKey] = {};
+  if (val === defaultAmt) {
+    delete S.expenseOverrides[monthKey][expId];
+    if (Object.keys(S.expenseOverrides[monthKey]).length === 0) delete S.expenseOverrides[monthKey];
+  } else {
+    S.expenseOverrides[monthKey][expId] = val;
+  }
+  save(S); renderSchedule(); renderOverview(); renderLoanCalc();
+}
+function resetExpenseOverride(monthKey, expId) {
+  if (S.expenseOverrides[monthKey]) {
+    delete S.expenseOverrides[monthKey][expId];
+    if (Object.keys(S.expenseOverrides[monthKey]).length === 0) delete S.expenseOverrides[monthKey];
+  }
+  save(S); renderSchedule(); renderOverview(); renderLoanCalc();
+}
+
+function currentDebtRemaining(months) {
+  let debtRemain = S.loan.balance;
+  months.forEach(m => { if (S.doneMonths[m.key]) debtRemain = Math.max(0, debtRemain - m.principal); });
+  return debtRemain;
+}
+
+// ---- OVERVIEW ----
+function renderOverview() {
+  const { months, exp1Base, exp2Base, totalExtraIncome, schedulePayment } = computePlan();
+  const totalExp = exp1Base + exp2Base;
+  const totalIncome = S.salary + totalExtraIncome;
+  const free = totalIncome - totalExp - schedulePayment;
+
+  document.getElementById('ov-salary').textContent = fmt(S.salary);
+  document.getElementById('ov-extra-income').textContent = fmt(totalExtraIncome);
+  document.getElementById('ov-expenses').textContent = fmt(totalExp);
+  document.getElementById('ov-payment').textContent = months.length ? fmt(schedulePayment) : '—';
+  document.getElementById('ov-free').textContent = (free < 0 ? '−' : '') + fmt(free);
+  document.getElementById('overview-subtitle').textContent = new Date().toLocaleDateString('ru-RU', { day:'numeric', month:'long', year:'numeric' });
+  document.getElementById('hero-hint').textContent = months.length ? 'После зарплаты, доп. доходов, всех расходов и платежа по кредиту' : 'Заполните раздел «Мои данные» → «Кредит», чтобы учесть платёж';
+
+  const tip = document.getElementById('ov-tip');
+  if (free < 0) {
+    tip.innerHTML = `При текущих расходах и платеже по кредиту не хватает <b>${fmt(-free)}</b> в месяц. Стоит пересмотреть какую-то статью расходов на вкладке «Мои данные».`;
+  } else if (free > 0) {
+    tip.innerHTML = `Свободно <b>${fmt(free)}</b> в месяц. Загляните во вкладку «🧮 Кредит» — там можно посчитать, насколько быстрее закроется долг, если направлять эти деньги на досрочное погашение.`;
+  } else {
+    tip.innerHTML = `Бюджет сходится ровно в ноль — платёж и расходы полностью покрываются доходом, свободных денег для ускорения погашения пока нет.`;
+  }
+}
+
+// ---- LOAN CALCULATOR TAB ----
+function renderLoanCalc() {
+  const { months, exp1Base, exp2Base, totalExtraIncome } = computePlan();
+  const balance = currentDebtRemaining(months);
+  const rate = S.loan.rate || 0;
+  const basePayment = annuityPayment(S.loan.balance, S.loan.rate, S.loan.term);
+  const monthsLeft = months.filter(m => !S.doneMonths[m.key]).length;
+  const lastMonth = months[months.length - 1];
+
+  document.getElementById('lc-balance').textContent = months.length ? fmt(balance) : '— укажите кредит';
+  document.getElementById('lc-rate').textContent = rate + '% годовых';
+  document.getElementById('lc-payment').textContent = months.length ? fmt(basePayment) : '—';
+  document.getElementById('lc-months-left').textContent = months.length ? monthsLeft : '—';
+  document.getElementById('lc-close').textContent = lastMonth ? lastMonth.label : '—';
+  const pct = S.loan.balance > 0 ? Math.min(100, Math.round((1 - balance / S.loan.balance) * 100)) : 0;
+  document.getElementById('lc-bar').style.width = pct + '%';
+
+  if (!months.length || balance <= 0) {
+    document.getElementById('lc-preset-table').innerHTML = '';
+    document.getElementById('lc-tip').textContent = 'Заполните условия кредита во вкладке «Мои данные», чтобы увидеть расчёт.';
+    return;
+  }
+
+  const base = amortizeWithPayment(balance, rate, basePayment);
+
+  const extraMonthly = parseFloat(document.getElementById('lc-extra-monthly').value) || 0;
+  const emResult = amortizeWithPayment(balance, rate, basePayment + extraMonthly);
+  document.getElementById('lc-em-term').textContent = isFinite(emResult.months) ? emResult.months + ' мес' : '—';
+  document.getElementById('lc-em-faster').textContent = isFinite(emResult.months) ? Math.max(0, base.months - emResult.months) + ' мес' : '—';
+  document.getElementById('lc-em-save').textContent = isFinite(emResult.totalInterest) ? fmt(Math.max(0, base.totalInterest - emResult.totalInterest)) : '—';
+  document.getElementById('lc-em-payment').textContent = fmt(basePayment + extraMonthly);
+
+  const lump = parseFloat(document.getElementById('lc-lump').value) || 0;
+  const balanceAfterLump = Math.max(0, balance - lump);
+  const lpResult = balanceAfterLump > 0 ? amortizeWithPayment(balanceAfterLump, rate, basePayment) : { months: 0, totalInterest: 0 };
+  document.getElementById('lc-lp-term').textContent = isFinite(lpResult.months) ? lpResult.months + ' мес' : '—';
+  document.getElementById('lc-lp-faster').textContent = isFinite(lpResult.months) ? Math.max(0, base.months - lpResult.months) + ' мес' : '—';
+  document.getElementById('lc-lp-save').textContent = isFinite(lpResult.totalInterest) ? fmt(Math.max(0, base.totalInterest - lpResult.totalInterest)) : '—';
+  document.getElementById('lc-lp-remain').textContent = fmt(balanceAfterLump);
+
+  const freeMoney = Math.max(0, S.salary + totalExtraIncome - exp1Base - exp2Base - basePayment);
+  const presets = [0, Math.round(freeMoney/2/100)*100, Math.round(freeMoney/100)*100, Math.round(freeMoney*1.5/100)*100].filter((v,i,a)=>a.indexOf(v)===i);
+  let rows = presets.map(extra => {
+    const r = amortizeWithPayment(balance, rate, basePayment + extra);
+    const savedMonths = isFinite(r.months) ? Math.max(0, base.months - r.months) : 0;
+    const savedInterest = isFinite(r.totalInterest) ? Math.max(0, base.totalInterest - r.totalInterest) : 0;
+    return { extra, months: r.months, savedMonths, savedInterest };
+  });
+  const maxSaved = Math.max(...rows.map(r => r.savedInterest));
+  let html = `<tr><th>Доплата/мес</th><th>Срок</th><th>Быстрее</th><th>Экономия</th></tr>`;
+  rows.forEach(r => {
+    const isBest = r.savedInterest === maxSaved && maxSaved > 0;
+    html += `<tr class="${isBest?'best':''}">
+      <td>${r.extra === 0 ? 'как сейчас' : '+' + fmt(r.extra)}</td>
+      <td>${isFinite(r.months) ? r.months+' мес' : '—'}</td>
+      <td>${r.savedMonths > 0 ? r.savedMonths+' мес' : '—'}</td>
+      <td class="save">${r.savedInterest > 0 ? fmt(r.savedInterest) : '—'}</td>
+    </tr>`;
+  });
+  document.getElementById('lc-preset-table').innerHTML = html;
+
+  const bestRow = rows.find(r => r.savedInterest === maxSaved && maxSaved > 0);
+  const tipEl = document.getElementById('lc-tip');
+  if (freeMoney <= 0) {
+    tipEl.innerHTML = `Свободных денег в бюджете сейчас нет — сначала стоит найти запас в расходах или добавить доп. доход, прежде чем гасить досрочно.`;
+  } else if (bestRow) {
+    tipEl.innerHTML = `Если направлять на кредит все свободные деньги (${fmt(freeMoney)}/мес) сверх обязательного платежа, кредит закроется примерно на <b>${bestRow.savedMonths} мес раньше</b>, экономия на процентах — около <b>${fmt(bestRow.savedInterest)}</b>. Не забудьте предупредить банк о досрочном погашении заранее — так требуют условия договора.`;
+  } else {
+    tipEl.innerHTML = `Добавьте доплату выше, чтобы увидеть, насколько раньше закроется кредит.`;
+  }
+}
+
+function togglePaidItem(e, monthKey, itemId) {
+  e.stopPropagation();
+  const key = monthKey + ':' + itemId;
+  S.paidItems[key] = !S.paidItems[key];
+  save(S); renderSchedule();
+}
+function isPaid(monthKey, itemId) { return !!S.paidItems[monthKey + ':' + itemId]; }
+function checkBox(monthKey, itemId) {
+  const paid = isPaid(monthKey, itemId);
+  return `<div class="pay-check ${paid?'paid':''}" onclick="togglePaidItem(event,'${monthKey}','${itemId}')">${paid?'✓':''}</div>`;
+}
+
+function showAddForm(monthKey) {
+  const existing = document.getElementById('inline-form-' + monthKey);
+  if (existing) { existing.remove(); return; }
+  const body = document.getElementById('body-' + monthKey);
+  const form = document.createElement('div');
+  form.className = 'inline-add-form';
+  form.id = 'inline-form-' + monthKey;
+  form.innerHTML = `
+    <select class="inline-type" id="iform-type-${monthKey}"><option value="expense">Расход</option><option value="income">Доход</option></select>
+    <input class="inline-name" type="text" placeholder="Название" id="iform-name-${monthKey}">
+    <select class="inline-half" id="iform-half-${monthKey}"><option value="1">1-я зп</option><option value="2">2-я зп</option></select>
+    <input class="inline-amount" type="number" inputmode="numeric" placeholder="0 ₽" id="iform-amt-${monthKey}">
+    <div class="inline-btns">
+      <button class="btn-inline-ok" onclick="confirmAddCustom('${monthKey}')">Добавить</button>
+      <button class="btn-inline-cancel" onclick="cancelAddCustom('${monthKey}')">✕</button>
+    </div>`;
+  body.appendChild(form);
+  document.getElementById('iform-name-' + monthKey).focus();
+}
+function cancelAddCustom(monthKey) { const f = document.getElementById('inline-form-' + monthKey); if (f) f.remove(); }
+function confirmAddCustom(monthKey) {
+  const name = (document.getElementById('iform-name-' + monthKey).value || '').trim();
+  const amount = parseFloat(document.getElementById('iform-amt-' + monthKey).value) || 0;
+  const half = parseInt(document.getElementById('iform-half-' + monthKey).value);
+  const type = document.getElementById('iform-type-' + monthKey).value;
+  if (!name || !amount) return;
+  if (!S.customExpenses[monthKey]) S.customExpenses[monthKey] = [];
+  S.customExpenses[monthKey].push({ id: uid(), name, amount, half, type });
+  save(S); renderSchedule(); renderOverview(); renderLoanCalc();
+}
+function deleteCustomExpense(monthKey, id) {
+  if (!S.customExpenses[monthKey]) return;
+  S.customExpenses[monthKey] = S.customExpenses[monthKey].filter(c => c.id !== id);
+  save(S); renderSchedule(); renderOverview(); renderLoanCalc();
+}
+
+function renderSchedule() {
+  const { months } = computePlan();
+  if (!months.length) {
+    document.getElementById('schedule-list').innerHTML = `<div class="tip-card"><div class="tip-body">Пока не заполнены условия кредита. Перейдите во вкладку «⚙️ Мои данные» → «Кредит» и укажите остаток, ставку и срок — график появится автоматически.</div></div>`;
+    return;
+  }
+  const half = S.salary / 2;
+  let html = '';
+
+  months.forEach(m => {
+    const done = S.doneMonths[m.key];
+    const open = openMonths.has(m.key);
+    const row = (itemId, cls, label, tagCls, tagText, amount, sign='-') => {
+      const paid = isPaid(m.key, itemId);
+      return `<div class="mt-row ${cls} ${paid?'paid-row':''}">
+        ${checkBox(m.key, itemId)}
+        <div class="mt-label">${label}</div>
+        ${tagText ? `<span class="mt-tag ${tagCls}">${tagText}</span>` : ''}
+        <div class="mt-amount">${sign}${fmt(amount)}</div>
+      </div>`;
+    };
+    // редактируемая статья расхода — можно поменять сумму именно за этот месяц
+    const editableExpenseRow = e => {
+      const overrides = S.expenseOverrides[m.key] || {};
+      const defaultAmt = (S.expenses.find(x => x.id === e.id) || {}).amount || 0;
+      const overridden = overrides[e.id] !== undefined;
+      const paid = isPaid(m.key, 'exp_'+e.id);
+      return `<div class="mt-row ${paid?'paid-row':''}">
+        ${checkBox(m.key, 'exp_'+e.id)}
+        <div class="mt-label">${e.name}${overridden?' <span style="color:var(--accent);font-size:10px;font-weight:700">изменено</span>':''}</div>
+        <input type="number" inputmode="numeric" class="mt-inline-amount" value="${e.amount}" onchange="setExpenseOverride('${m.key}','${e.id}',this.value,${defaultAmt})">
+        ${overridden ? `<button class="mini-reset" title="Вернуть обычную сумму" onclick="resetExpenseOverride('${m.key}','${e.id}')">↺</button>` : ''}
+      </div>`;
+    };
+    const inc1List = S.extraIncomes.filter(e => e.half === 1);
+    const inc2List = S.extraIncomes.filter(e => e.half === 2);
+    const customs1 = m.customs.filter(c => c.half === 1);
+    const customs2 = m.customs.filter(c => c.half === 2);
+
+    const customRow = c => `<div class="mt-row ${c.type==='income'?'row-income':''} ${isPaid(m.key,'custom_'+c.id)?'paid-row':''}">
+      ${checkBox(m.key,'custom_'+c.id)}<div class="mt-label">${c.name}</div>
+      <span class="mt-tag t-custom">${c.type==='income'?'Доп. доход':'Доп. расход'}</span>
+      <div class="mt-amount">${c.type==='income'?'+':'−'}${fmt(c.amount)}</div>
+      <button class="pay-check" style="border:none;color:var(--debt)" onclick="deleteCustomExpense('${m.key}','${c.id}')">✕</button>
+    </div>`;
+
+    html += `<div class="month-card">
+      <div class="month-header" onclick="toggleMonth('${m.key}')">
+        <div class="month-header-left">
+          <div class="month-done-toggle ${done?'done':''}" onclick="toggleDone(event,'${m.key}')">${done?'✓':''}</div>
+          <div>
+            <div class="month-name ${done?'done':''}">${m.label}${done?' ✅':''}</div>
+            <div class="month-summary">Расходы ${fmt(m.totalExpenses)} · Платёж ${fmt(m.totalDebtPaid)} · Остаток ${fmt(m.balance)}</div>
+          </div>
+        </div>
+        <div class="month-chevron ${open?'open':''}" id="chev-${m.key}">▼</div>
+      </div>
+      <div class="month-body ${open?'open':''}" id="body-${m.key}">
+        <div class="mt-row row-sep"><div class="mt-label">💰 1-я зарплата (списание кредита ${m.day} числа)</div></div>
+        ${row('inc1','row-income','Зарплата — 1-я часть','t-income','Доход',half,'+')}
+        ${inc1List.map(e => row('inc_'+e.id,'row-income',e.name,'t-income','Доход',e.amount,'+')).join('')}
+        ${m.exp1Items.map(editableExpenseRow).join('')}
+        ${customs1.map(customRow).join('')}
+        ${m.loanPay1 > 0 ? row('loan1','row-debt',`🏦 Платёж по кредиту (${m.day} ${m.short})`,'t-loan','Кредит',m.loanPay1) : ''}
+        ${m.free1 > 0 ? row('free1','row-free','💚 В резерв','t-free','Свободно',m.free1,'+') : ''}
+
+        <div class="mt-row row-sep"><div class="mt-label">💰 2-я зарплата</div></div>
+        ${row('inc2','row-income','Зарплата — 2-я часть','t-income','Доход',half,'+')}
+        ${inc2List.map(e => row('inc_'+e.id,'row-income',e.name,'t-income','Доход',e.amount,'+')).join('')}
+        ${m.exp2Items.map(editableExpenseRow).join('')}
+        ${customs2.map(customRow).join('')}
+        ${m.free2 > 0 ? row('free2','row-free','💚 Свободные деньги — в резерв','t-free','Свободно',m.free2,'+') : ''}
+
+        <div class="mt-row row-total">
+          <div class="mt-label">📊 Итог месяца</div>
+          <div class="mt-amount" style="font-size:11px;color:var(--muted)">расходы −${fmt(m.totalExpenses)} · кредит −${fmt(m.totalDebtPaid)}</div>
+        </div>
+        <button class="btn-add-in-month" onclick="showAddForm('${m.key}')">＋ Добавить разовый доход или расход в этот месяц (например, подарок, помощь)</button>
+      </div>
+    </div>`;
+  });
+  document.getElementById('schedule-list').innerHTML = html;
+}
+
+// ---- SETTINGS: EXPENSE LIST ----
+function renderExpenseList() {
+  const list = document.getElementById('expense-list');
+  list.innerHTML = S.expenses.map(e => `
+    <div class="expense-row expense-item" data-id="${e.id}">
+      <input type="text" value="${e.name.replace(/"/g,'&quot;')}" oninput="updateExpenseField('${e.id}','name',this.value)">
+      <select onchange="updateExpenseField('${e.id}','half',parseInt(this.value))">
+        <option value="1" ${e.half===1?'selected':''}>1-я зп</option>
+        <option value="2" ${e.half===2?'selected':''}>2-я зп</option>
+      </select>
+      <input type="number" inputmode="numeric" value="${e.amount}" oninput="updateExpenseField('${e.id}','amount',parseFloat(this.value)||0)">
+      <button class="btn-del" onclick="removeExpenseRow('${e.id}')">✕</button>
+    </div>`).join('');
+}
+function updateExpenseField(id, field, value) {
+  const item = S.expenses.find(e => e.id === id);
+  if (item) item[field] = value;
+}
+function addExpenseRow() {
+  S.expenses.push({ id: uid(), name: 'Новая статья', amount: 0, half: 1 });
+  renderExpenseList();
+}
+function removeExpenseRow(id) {
+  S.expenses = S.expenses.filter(e => e.id !== id);
+  renderExpenseList();
+}
+
+// ---- SETTINGS: EXTRA INCOME LIST ----
+function renderIncomeList() {
+  const list = document.getElementById('income-list');
+  list.innerHTML = S.extraIncomes.map(e => `
+    <div class="expense-row income-row" data-id="${e.id}">
+      <input type="text" value="${e.name.replace(/"/g,'&quot;')}" oninput="updateIncomeField('${e.id}','name',this.value)">
+      <select onchange="updateIncomeField('${e.id}','half',parseInt(this.value))">
+        <option value="1" ${e.half===1?'selected':''}>1-я зп</option>
+        <option value="2" ${e.half===2?'selected':''}>2-я зп</option>
+      </select>
+      <input type="number" inputmode="numeric" value="${e.amount}" oninput="updateIncomeField('${e.id}','amount',parseFloat(this.value)||0)">
+      <button class="btn-del" onclick="removeIncomeRow('${e.id}')">✕</button>
+    </div>`).join('') || `<div class="settings-hint" style="margin:0">Пока пусто — добавьте, если есть подработка или другой регулярный доход.</div>`;
+}
+function updateIncomeField(id, field, value) {
+  const item = S.extraIncomes.find(e => e.id === id);
+  if (item) item[field] = value;
+}
+function addIncomeRow() {
+  S.extraIncomes.push({ id: uid(), name: 'Доп. доход', amount: 0, half: 1 });
+  renderIncomeList();
+}
+function removeIncomeRow(id) {
+  S.extraIncomes = S.extraIncomes.filter(e => e.id !== id);
+  renderIncomeList();
+}
+
+function renderSettings() {
+  document.getElementById('s-salary').value = S.salary;
+  document.getElementById('s-loan-balance').value = S.loan.balance;
+  document.getElementById('s-loan-rate').value = S.loan.rate;
+  document.getElementById('s-loan-term').value = S.loan.term;
+  document.getElementById('s-loan-day').value = S.loan.day;
+  document.getElementById('s-loan-start').value = S.loan.start;
+  renderExpenseList();
+  renderIncomeList();
+}
+
+function saveSettings() {
+  const g = id => parseFloat(document.getElementById(id).value) || 0;
+  S.salary = g('s-salary');
+  S.loan.balance = g('s-loan-balance');
+  S.loan.rate = g('s-loan-rate');
+  S.loan.term = Math.max(1, Math.round(g('s-loan-term')));
+  S.loan.day = Math.max(1, Math.min(28, Math.round(g('s-loan-day')) || 1));
+  S.loan.start = document.getElementById('s-loan-start').value || S.loan.start;
+  save(S);
+  renderOverview(); renderSchedule(); renderLoanCalc();
+  const toast = document.getElementById('toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function showPage(name, e) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (e && e.currentTarget) e.currentTarget.classList.add('active');
+  if (name === 'loan') renderLoanCalc();
+}
+function toggleMonth(key) {
+  if (openMonths.has(key)) openMonths.delete(key); else openMonths.add(key);
+  document.getElementById('body-' + key).classList.toggle('open');
+  document.getElementById('chev-' + key).classList.toggle('open');
+}
+function toggleDone(e, key) {
+  e.stopPropagation();
+  S.doneMonths[key] = !S.doneMonths[key];
+  save(S); renderSchedule(); renderOverview(); renderLoanCalc();
+}
+
+renderOverview();
+renderSchedule();
+renderSettings();
+renderLoanCalc();
+</script>
+</body>
+</html>
